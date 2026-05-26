@@ -259,10 +259,7 @@ Hooks.once(
       fixSpellcasting:
         fixSpellcastingActivityUuids,
       open:
-        () =>
-          new EncounterOfManyThingsImportDialog().render(
-            true
-          ),
+        openImportDialog,
     };
 
     ui.notifications.info(
@@ -270,6 +267,12 @@ Hooks.once(
     );
   }
 );
+
+function openImportDialog() {
+  return new EncounterOfManyThingsImportDialog().render(
+    true
+  );
+}
 
 Hooks.on(
   "getActorDirectoryEntryContext",
@@ -283,10 +286,7 @@ Hooks.on(
         condition:
           () => game.user.isGM,
         callback:
-          () =>
-            new EncounterOfManyThingsImportDialog().render(
-              true
-            ),
+          openImportDialog,
       }
     );
   }
@@ -299,38 +299,128 @@ Hooks.on(
       return;
     }
 
-    const footer =
-      html.find(
-        ".directory-footer"
+    const root =
+      getHtmlElement(
+        html
       );
 
+    if (!root) {
+      return;
+    }
+
+    injectActorDirectoryButton(
+      root
+    );
+  }
+);
+
+function getHtmlElement(
+  html
+) {
+  if (html instanceof HTMLElement) {
+    return html;
+  }
+
+  if (html?.[0] instanceof HTMLElement) {
+    return html[0];
+  }
+
+  return null;
+}
+
+function injectActorDirectoryButton(
+  root
+) {
+  if (
+    root.querySelector(
+      "[data-eomt-import]"
+    )
+  ) {
+    return;
+  }
+
+  const button =
+    document.createElement(
+      "button"
+    );
+
+  button.type =
+    "button";
+  button.dataset.eomtImport =
+    "true";
+  button.classList.add(
+    "eomt-import-button"
+  );
+  button.innerHTML =
+    '<i class="fas fa-file-import"></i> Import EoMT Actor';
+  button.addEventListener(
+    "click",
+    openImportDialog
+  );
+
+  const target =
+    root.querySelector(
+      ".directory-footer"
+    ) ??
+    root.querySelector(
+      ".directory-header"
+    ) ??
+    root.querySelector(
+      "header"
+    ) ??
+    root;
+
+  target.append(
+    button
+  );
+}
+
+Hooks.on(
+  "renderSidebarTab",
+  (app, html) => {
     if (
-      !footer.length ||
-      footer.find(
-        "[data-eomt-import]"
-      ).length
+      app?.options?.id !== "actors" ||
+      !game.user.isGM
     ) {
       return;
     }
 
-    const button =
-      $(
-        `<button type="button" data-eomt-import>
-          <i class="fas fa-file-import"></i>
-          Import EoMT Actor
-        </button>`
+    const root =
+      getHtmlElement(
+        html
       );
 
-    button.on(
-      "click",
-      () =>
-        new EncounterOfManyThingsImportDialog().render(
-          true
-        )
-    );
+    if (root) {
+      injectActorDirectoryButton(
+        root
+      );
+    }
+  }
+);
 
-    footer.append(
-      button
+Hooks.on(
+  "renderActorDirectory",
+  (_app, html) => {
+    window.setTimeout(
+      () => {
+        const root =
+          getHtmlElement(
+            html
+          ) ??
+          document.querySelector(
+            "#actors"
+          );
+
+        if (
+          root &&
+          game.user.isGM
+        ) {
+          injectActorDirectoryButton(
+            root
+          );
+        }
+      },
+      100
     );
   }
 );

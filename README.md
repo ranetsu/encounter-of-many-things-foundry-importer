@@ -14,7 +14,7 @@ https://github.com/ranetsu/encounter-of-many-things-foundry-importer/releases/la
 
 1. Export a Foundry Actor JSON from Encounter of Many Things.
 2. In Foundry, open the Actors directory.
-3. Click **Import EoMT Actor**, or right-click any Actor and choose **Import Encounter of Many Things Actor**.
+3. Click **Import EoMT Actor** in the Actors sidebar header/footer, or right-click any Actor and choose **Import Encounter of Many Things Actor**.
 4. Select the exported JSON file.
 
 The module creates a new NPC Actor and fixes embedded spellcasting activity UUIDs so actions such as Spellcasting and Divine Aid point at the spells embedded in the created Actor.
