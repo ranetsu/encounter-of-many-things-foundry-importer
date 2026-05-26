@@ -147,7 +147,9 @@ async function fixSpellcastingActivityUuids(
   actor
 ) {
   const updates =
-    actor.items.flatMap(
+    Array.from(
+      actor.items
+    ).flatMap(
       (item) => {
         const activities =
           foundry.utils.deepClone(
