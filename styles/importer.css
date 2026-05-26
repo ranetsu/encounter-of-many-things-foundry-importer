@@ -1,0 +1,8 @@
+.eomt-importer .eomt-import-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.eomt-importer .sheet-footer {
+  margin-top: 0.5rem;
+}

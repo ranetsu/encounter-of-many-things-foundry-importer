@@ -1,0 +1,19 @@
+<form class="eomt-import-form">
+  <p>
+    Choose an Actor JSON file exported by Encounter of Many Things. The importer
+    creates a new NPC Actor and rewrites embedded spellcasting activity UUIDs to
+    match the created Actor.
+  </p>
+
+  <div class="form-group">
+    <label>Actor JSON</label>
+    <input type="file" name="actorJson" accept=".json,application/json">
+  </div>
+
+  <footer class="sheet-footer flexrow">
+    <button type="button" data-action="import">
+      <i class="fas fa-file-import"></i>
+      Import Actor
+    </button>
+  </footer>
+</form>

@@ -1,0 +1,9 @@
+{
+  "name": "encounter-of-many-things-foundry-importer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "package": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-module.ps1"
+  }
+}

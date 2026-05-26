@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate manifest version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          MANIFEST_VERSION="$(node -p "require('./module.json').version")"
+          test "$VERSION" = "$MANIFEST_VERSION"
+
+      - name: Package module
+        run: |
+          mkdir -p dist/encounter-of-many-things-importer
+          cp module.json README.md dist/encounter-of-many-things-importer/
+          cp -R scripts styles templates dist/encounter-of-many-things-importer/
+          cd dist/encounter-of-many-things-importer
+          zip -r ../encounter-of-many-things-importer.zip .
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            module.json
+            dist/encounter-of-many-things-importer.zip
