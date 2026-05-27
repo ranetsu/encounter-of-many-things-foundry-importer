@@ -151,15 +151,16 @@ async function fixSpellcastingActivityUuids(
       actor.items
     ).flatMap(
       (item) => {
-        const activities =
-          foundry.utils.deepClone(
-            item.system?.activities ?? {}
-          );
-        let changed =
-          false;
+        const itemUpdate = {
+          _id:
+            item.id,
+        };
 
-        for (const activity of Object.values(
-          activities
+        for (const [
+          activityId,
+          activity,
+        ] of Object.entries(
+          item.system?.activities ?? {}
         )) {
           if (
             activity.type !== "cast"
@@ -185,25 +186,20 @@ async function fixSpellcastingActivityUuids(
             continue;
           }
 
-          activity.spell ??=
-            {};
-          activity.spell.uuid =
+          itemUpdate[
+            `system.activities.${activityId}.spell.uuid`
+          ] =
             buildEmbeddedSpellUuid(
               actor,
               spell
             );
-          changed =
-            true;
         }
 
-        return changed
+        return Object.keys(
+          itemUpdate
+        ).length > 1
           ? [
-              {
-                _id:
-                  item.id,
-                "system.activities":
-                  activities,
-              },
+              itemUpdate,
             ]
           : [];
       }
