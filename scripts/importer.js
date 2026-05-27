@@ -188,7 +188,10 @@ async function fixSpellcastingActivityUuids(
           activity.spell ??=
             {};
           activity.spell.uuid =
-            spell.uuid;
+            buildEmbeddedSpellUuid(
+              actor,
+              spell
+            );
           changed =
             true;
         }
@@ -212,6 +215,13 @@ async function fixSpellcastingActivityUuids(
       updates
     );
   }
+}
+
+function buildEmbeddedSpellUuid(
+  actor,
+  spell
+) {
+  return `${actor.uuid}.Item.${spell.id}`;
 }
 
 function extractEmbeddedSpellId(
