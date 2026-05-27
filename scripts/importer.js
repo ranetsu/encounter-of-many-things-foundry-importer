@@ -108,6 +108,9 @@ async function importEncounterActor(
   await fixActorSpellcastingAbility(
     actor
   );
+  await fixActorSpellcastingSlots(
+    actor
+  );
   await fixSpellcastingActivityUuids(
     actor
   );
@@ -139,6 +142,131 @@ async function fixActorSpellcastingAbility(
         ability,
     }
   );
+}
+
+async function fixActorSpellcastingSlots(
+  actor
+) {
+  const update = {};
+  const currentLevel =
+    actor.system?.attributes?.spell?.level ?? 0;
+  const profile =
+    inferSpellcastingProfile(
+      actor
+    );
+
+  if (
+    profile.level > 0 &&
+    !currentLevel
+  ) {
+    update[
+      "system.attributes.spell.level"
+    ] =
+      profile.level;
+  }
+
+  for (const [
+    level,
+    value,
+  ] of Object.entries(
+    profile.slots
+  )) {
+    const path =
+      `system.spells.spell${level}`;
+    const current =
+      actor.system?.spells?.[
+        `spell${level}`
+      ]?.value ?? 0;
+
+    if (!current) {
+      update[
+        `${path}.value`
+      ] =
+        value;
+      update[
+        `${path}.override`
+      ] =
+        null;
+    }
+  }
+
+  if (
+    Object.keys(
+      update
+    ).length
+  ) {
+    await actor.update(
+      update
+    );
+  }
+}
+
+function inferSpellcastingProfile(
+  actor
+) {
+  const profile = {
+    level:
+      0,
+    slots:
+      {},
+  };
+
+  for (const item of Array.from(
+    actor.items
+  )) {
+    if (
+      item.type !== "feat" ||
+      !/spellcasting/i.test(
+        item.name ?? ""
+      )
+    ) {
+      continue;
+    }
+
+    const text =
+      stripHtml(
+        item.system?.description?.value ?? ""
+      );
+
+    profile.level ||= spellcastingLevelFromText(
+      text
+    );
+    Object.assign(
+      profile.slots,
+      spellSlotsFromText(
+        text
+      )
+    );
+  }
+
+  return profile;
+}
+
+function spellcastingLevelFromText(
+  text
+) {
+  return Number(
+    text.match(
+      /\b(\d+)(?:st|nd|rd|th)?(?:-|\s+)level spellcaster\b/i
+    )?.[1] ?? 0
+  );
+}
+
+function spellSlotsFromText(
+  text
+) {
+  const slots = {};
+
+  for (const match of text.matchAll(
+    /\b([1-9])(?:st|nd|rd|th)?\s+level\s*\((\d+)\s+slots?\)/gi
+  )) {
+    slots[match[1]] =
+      Number(
+        match[2]
+      );
+  }
+
+  return slots;
 }
 
 function inferSpellcastingAbility(
