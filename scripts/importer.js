@@ -105,11 +105,157 @@ async function importEncounterActor(
       }
     );
 
+  await fixActorSpellcastingAbility(
+    actor
+  );
   await fixSpellcastingActivityUuids(
     actor
   );
 
   return actor;
+}
+
+async function fixActorSpellcastingAbility(
+  actor
+) {
+  if (
+    actor.system?.attributes?.spellcasting
+  ) {
+    return;
+  }
+
+  const ability =
+    inferSpellcastingAbility(
+      actor
+    );
+
+  if (!ability) {
+    return;
+  }
+
+  await actor.update(
+    {
+      "system.attributes.spellcasting":
+        ability,
+    }
+  );
+}
+
+function inferSpellcastingAbility(
+  actor
+) {
+  for (const item of Array.from(
+    actor.items
+  )) {
+    if (
+      item.type !== "feat" ||
+      !/spellcasting/i.test(
+        item.name ?? ""
+      )
+    ) {
+      continue;
+    }
+
+    const ability =
+      spellcastingAbilityFromText(
+        item.system?.description?.value ?? ""
+      );
+
+    if (ability) {
+      return ability;
+    }
+  }
+
+  const spellAbilities =
+    Array.from(
+      actor.items
+    )
+      .filter(
+        (item) =>
+          item.type === "spell" &&
+          item.system?.ability
+      )
+      .map(
+        (item) =>
+          item.system.ability
+      );
+
+  return mostCommon(
+    spellAbilities
+  );
+}
+
+function spellcastingAbilityFromText(
+  text
+) {
+  const plainText =
+    stripHtml(
+      text
+    );
+  const match =
+    plainText.match(
+      /\b(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\b(?=[^.;]*(?:spellcasting ability|spell save DC|spell attacks))/i
+    ) ??
+    plainText.match(
+      /uses\s+(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+as (?:its|the) spellcasting ability/i
+    );
+  const abilityMap = {
+    strength:
+      "str",
+    dexterity:
+      "dex",
+    constitution:
+      "con",
+    intelligence:
+      "int",
+    wisdom:
+      "wis",
+    charisma:
+      "cha",
+  };
+
+  return match
+    ? abilityMap[
+        match[1].toLowerCase()
+      ] ?? ""
+    : "";
+}
+
+function stripHtml(
+  text
+) {
+  const element =
+    document.createElement(
+      "div"
+    );
+  element.innerHTML =
+    text;
+  return element.textContent ?? "";
+}
+
+function mostCommon(
+  values
+) {
+  const counts =
+    new Map();
+
+  for (const value of values) {
+    counts.set(
+      value,
+      (counts.get(
+        value
+      ) ?? 0) + 1
+    );
+  }
+
+  return (
+    Array.from(
+      counts.entries()
+    ).sort(
+      (a, b) =>
+        b[1] - a[1]
+    )[0]?.[0] ?? ""
+  );
 }
 
 function validateActorData(
