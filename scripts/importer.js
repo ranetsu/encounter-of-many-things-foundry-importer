@@ -159,8 +159,8 @@ async function fixSpellcastingActivityUuids(
         for (const [
           activityId,
           activity,
-        ] of Object.entries(
-          item.system?.activities ?? {}
+        ] of getActivityEntries(
+          item
         )) {
           if (
             activity.type !== "cast"
@@ -193,6 +193,10 @@ async function fixSpellcastingActivityUuids(
               actor,
               spell
             );
+          itemUpdate[
+            `system.activities.${activityId}.name`
+          ] =
+            spell.name;
         }
 
         return Object.keys(
@@ -211,6 +215,25 @@ async function fixSpellcastingActivityUuids(
       updates
     );
   }
+}
+
+function getActivityEntries(
+  item
+) {
+  const activities =
+    item.system?.activities ?? {};
+
+  if (
+    typeof activities.entries === "function"
+  ) {
+    return Array.from(
+      activities.entries()
+    );
+  }
+
+  return Object.entries(
+    activities
+  );
 }
 
 function buildEmbeddedSpellUuid(
