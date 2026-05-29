@@ -35,6 +35,11 @@ npx esbuild $importerEntry `
   "--outfile=$importerOut" `
   --log-level=warning
 
+$importerContent = Get-Content -LiteralPath $importerOut -Raw
+if ($importerContent -match "from\s+[`"']fflate[`"']|fflate\.module") {
+  throw "Bundled importer still references an external fflate module."
+}
+
 Compress-Archive -Path (Join-Path $packageDir "*") -DestinationPath $zipPath -Force
 
 Write-Host "Packaged $zipPath"
