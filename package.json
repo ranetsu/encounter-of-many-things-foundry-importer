@@ -1,12 +1,13 @@
 {
   "name": "encounter-of-many-things-foundry-importer",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "private": true,
   "type": "module",
   "scripts": {
     "package": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-module.ps1"
   },
   "devDependencies": {
+    "esbuild": "^0.28.0",
     "fflate": "^0.8.3"
   }
 }

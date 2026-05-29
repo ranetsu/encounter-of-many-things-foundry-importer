@@ -1,7 +1,7 @@
 import {
   strFromU8,
   unzipSync,
-} from "../lib/fflate.module.js";
+} from "fflate";
 
 const MODULE_ID =
   "encounter-of-many-things-importer";
