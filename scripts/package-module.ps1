@@ -15,6 +15,7 @@ New-Item -ItemType Directory -Force $packageDir | Out-Null
 $items = @(
   "module.json",
   "README.md",
+  "lib",
   "scripts",
   "styles",
   "templates"

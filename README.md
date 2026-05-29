@@ -1,6 +1,6 @@
 # Encounter of Many Things Importer
 
-Foundry VTT module for importing Actor JSON files exported by Encounter of Many Things.
+Foundry VTT module for importing EoMT package ZIPs and Actor JSON files exported by Encounter of Many Things.
 
 ## Install From Manifest URL
 
@@ -12,12 +12,14 @@ https://github.com/ranetsu/encounter-of-many-things-foundry-importer/releases/la
 
 ## Use
 
-1. Export a Foundry Actor JSON from Encounter of Many Things.
+1. Export a Foundry package from Encounter of Many Things.
 2. In Foundry, open the Actors directory.
 3. Click **Import EoMT Actor** in the Actors sidebar header/footer, or right-click any Actor and choose **Import Encounter of Many Things Actor**.
-4. Select the exported JSON file.
+4. Select the exported `.eomt.zip` package.
 
-The module creates a new NPC Actor and fixes embedded spellcasting activity UUIDs so actions such as Spellcasting and Divine Aid point at the spells embedded in the created Actor.
+The module uploads packaged token art into the Foundry Data folder, creates the NPC Actors, and fixes embedded spellcasting activity UUIDs so actions such as Spellcasting and Divine Aid point at the spells embedded in each created Actor.
+
+Single Actor JSON files are still supported for quick manual tests, but package ZIPs are preferred because they can include images and multiple Actors.
 
 You can also run this in the Foundry console:
 

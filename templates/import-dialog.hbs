@@ -1,19 +1,18 @@
 <form class="eomt-import-form">
   <p>
-    Choose an Actor JSON file exported by Encounter of Many Things. The importer
-    creates a new NPC Actor and rewrites embedded spellcasting activity UUIDs to
-    match the created Actor.
+    Choose an EoMT package ZIP or Actor JSON exported by Encounter of Many
+    Things. Packages can include token art and multiple Actors.
   </p>
 
   <div class="form-group">
-    <label>Actor JSON</label>
-    <input type="file" name="actorJson" accept=".json,application/json">
+    <label>EoMT Package or Actor JSON</label>
+    <input type="file" name="actorFile" accept=".zip,.eomt,.json,application/zip,application/json">
   </div>
 
   <footer class="sheet-footer flexrow">
     <button type="button" data-action="import">
       <i class="fas fa-file-import"></i>
-      Import Actor
+      Import
     </button>
   </footer>
 </form>

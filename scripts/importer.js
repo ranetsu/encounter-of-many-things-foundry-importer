@@ -1,3 +1,8 @@
+import {
+  strFromU8,
+  unzipSync,
+} from "../lib/fflate.module.js";
+
 const MODULE_ID =
   "encounter-of-many-things-importer";
 
@@ -41,32 +46,32 @@ class EncounterOfManyThingsImportDialog extends Application {
   async #importSelectedFile(html) {
     const fileInput =
       html.find(
-        "input[name='actorJson']"
+        "input[name='actorFile']"
       )[0];
     const file =
       fileInput?.files?.[0];
 
     if (!file) {
       ui.notifications.warn(
-        "Choose an Encounter of Many Things Actor JSON file first."
+        "Choose an Encounter of Many Things JSON or package file first."
       );
       return;
     }
 
     try {
-      const actorData =
-        JSON.parse(
-          await file.text()
+      const actors =
+        await importEncounterFile(
+          file
         );
-      const actor =
-        await importEncounterActor(
-          actorData
-        );
+      const firstActor =
+        actors[0];
 
       ui.notifications.info(
-        `Imported ${actor.name}.`
+        actors.length === 1
+          ? `Imported ${firstActor.name}.`
+          : `Imported ${actors.length} Encounter of Many Things actors.`
       );
-      actor.sheet?.render(
+      firstActor?.sheet?.render(
         true
       );
       this.close();
@@ -80,6 +85,96 @@ class EncounterOfManyThingsImportDialog extends Application {
       );
     }
   }
+}
+
+async function importEncounterFile(
+  file
+) {
+  const fileName =
+    file.name.toLowerCase();
+
+  if (
+    fileName.endsWith(
+      ".zip"
+    ) ||
+    fileName.endsWith(
+      ".eomt"
+    )
+  ) {
+    return importEncounterPackage(
+      file
+    );
+  }
+
+  const actorData =
+    JSON.parse(
+      await file.text()
+    );
+  return [
+    await importEncounterActor(
+      actorData
+    ),
+  ];
+}
+
+async function importEncounterPackage(
+  file
+) {
+  const entries =
+    unzipSync(
+      new Uint8Array(
+        await file.arrayBuffer()
+      )
+    );
+  const manifestEntry =
+    entries["manifest.json"];
+
+  if (!manifestEntry) {
+    throw new Error(
+      "EoMT package is missing manifest.json."
+    );
+  }
+
+  const manifest =
+    JSON.parse(
+      strFromU8(
+        manifestEntry
+      )
+    );
+
+  validatePackageManifest(
+    manifest
+  );
+
+  await importPackageAssets(
+    manifest,
+    entries
+  );
+
+  const actors = [];
+
+  for (const actorPath of manifest.actors) {
+    const actorEntry =
+      entries[actorPath];
+
+    if (!actorEntry) {
+      throw new Error(
+        `EoMT package is missing ${actorPath}.`
+      );
+    }
+
+    actors.push(
+      await importEncounterActor(
+        JSON.parse(
+          strFromU8(
+            actorEntry
+          )
+        )
+      )
+    );
+  }
+
+  return actors;
 }
 
 async function importEncounterActor(
@@ -414,6 +509,163 @@ function validateActorData(
     throw new Error(
       "Actor JSON does not contain embedded items."
     );
+  }
+}
+
+function validatePackageManifest(
+  manifest
+) {
+  if (
+    !manifest ||
+    manifest.format !==
+      "encounter-of-many-things-foundry-package" ||
+    !Array.isArray(
+      manifest.actors
+    ) ||
+    !Array.isArray(
+      manifest.assets
+    )
+  ) {
+    throw new Error(
+      "Invalid Encounter of Many Things package manifest."
+    );
+  }
+}
+
+async function importPackageAssets(
+  manifest,
+  entries
+) {
+  for (const asset of manifest.assets) {
+    if (
+      !asset ||
+      typeof asset.path !== "string" ||
+      typeof asset.file !== "string"
+    ) {
+      continue;
+    }
+
+    const data =
+      entries[asset.file];
+
+    if (!data) {
+      throw new Error(
+        `EoMT package is missing ${asset.file}.`
+      );
+    }
+
+    await uploadDataFile(
+      asset.path,
+      data
+    );
+  }
+}
+
+async function uploadDataFile(
+  path,
+  data
+) {
+  const normalizedPath =
+    path.replace(
+      /\\/g,
+      "/"
+    );
+
+  if (
+    normalizedPath.startsWith(
+      "/"
+    ) ||
+    normalizedPath.includes(
+      ".."
+    )
+  ) {
+    throw new Error(
+      `Unsafe asset path: ${path}`
+    );
+  }
+
+  const parts =
+    normalizedPath.split(
+      "/"
+    );
+  const filename =
+    parts.pop();
+  const directory =
+    parts.join(
+      "/"
+    );
+
+  if (!filename) {
+    return;
+  }
+
+  await ensureDataDirectory(
+    directory
+  );
+
+  const file =
+    new File(
+      [
+        data,
+      ],
+      filename
+    );
+
+  await FilePicker.upload(
+    "data",
+    directory,
+    file,
+    {
+      notify:
+        false,
+    }
+  );
+}
+
+async function ensureDataDirectory(
+  directory
+) {
+  if (!directory) {
+    return;
+  }
+
+  const parts =
+    directory
+      .split(
+        "/"
+      )
+      .filter(
+        Boolean
+      );
+  let current =
+    "";
+
+  for (const part of parts) {
+    current =
+      current
+        ? `${current}/${part}`
+        : part;
+
+    try {
+      await FilePicker.createDirectory(
+        "data",
+        current,
+        {
+          notify:
+            false,
+        }
+      );
+    } catch (error) {
+      if (
+        !String(
+          error?.message ?? error
+        ).match(
+          /exist/i
+        )
+      ) {
+        throw error;
+      }
+    }
   }
 }
 
