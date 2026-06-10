@@ -23,11 +23,8 @@ jobs:
 
       - name: Package module
         run: |
-          mkdir -p dist/encounter-of-many-things-importer
-          cp module.json README.md dist/encounter-of-many-things-importer/
-          cp -R scripts styles templates dist/encounter-of-many-things-importer/
-          cd dist/encounter-of-many-things-importer
-          zip -r ../encounter-of-many-things-importer.zip .
+          npm ci
+          npm run package
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
